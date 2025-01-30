@@ -142,7 +142,7 @@ const Footer = () => {
         
         <div>
           <h2 className="text-[20px] leading-[30px] font-[700] mb-6 text-headingColor">
-            Suppor
+            Support
           </h2>
           
           <ul>

@@ -5,12 +5,12 @@ import heroImg03 from '../assets/images/hero-Img03.png'
 import icon01 from '../assets/images/icon01.png'
 import icon02 from '../assets/images/icon02.png'
 import icon03 from '../assets/images/icon03.png'
+import userImg from "../assets/images/avatar-icon.png";
+import featureImg from '../assets/images/feature-img.png'
 import {Link} from 'react-router-dom' 
 import {BsArrowRight} from "react-icons/bs" 
 import About from '../components/About/About'
-
-
-
+import Services from './Services'
 
 const Home = () => {
   return (
@@ -169,6 +169,49 @@ const Home = () => {
 {/* ========= about Section start ========= */}
 <About/>
 {/* ========= about Section end ========= */}
+{/*========== Services Section Start ========= */}
+<section>
+<Services/>
+</section>
+{/*========== Services Section End ========= */}
+{/*========== Feature Section ============== */}
+<section className="py-12">
+      <div className="container flex flex-col lg:flex-row items-center justify-between gap-12">
+        
+        {/* Left Section - Text Content */}
+        <div className="w-full lg:w-1/2">
+          <h2 className="text-4xl font-bold text-gray-900 mb-6">
+            Get virtual treatment anytime.
+          </h2>
+          <ul className="text-lg text-gray-600 space-y-3">
+            <li>1. Schedule the appointment directly.</li>
+            <li>2. Search for your physician here, and contact their office.</li>
+            <li>3. View our physicians who are accepting new patients, use the online scheduling tool to select an appointment time.</li>
+          </ul>
+          <Link to="/">
+            <button className="mt-6 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">
+              Learn More
+            </button>
+          </Link>
+        </div>
+
+        {/* Right Section - Image & Floating Card */}
+        <div className="relative w-full lg:w-1/2 flex justify-center">
+          <img src={featureImg} alt="Doctor" className="w-3/4 lg:w-full max-w-md" />
+            {/* Floating Appointment Card */}
+            <div className="absolute bottom-6 right-[-5%] md:right-[10%] bg-white shadow-lg rounded-lg p-4 flex items-center space-x-3">
+            <img src={userImg} alt="User" className="w-10 h-10 rounded-full" />
+            <div>
+              <p className="text-gray-500 text-sm">Tue, 24  10:00AM</p>
+              <p className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-md inline-block">Consultation</p>
+              <p className="font-semibold text-gray-900 mt-1">Wayne Collins</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+{/*========== Feature Section End ============== */}
 
 
     </>

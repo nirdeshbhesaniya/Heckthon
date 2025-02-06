@@ -7,6 +7,7 @@ import Login from "../Pages/Login";
 import Signup from "../Pages/Signup";
 import Contact from "../Pages/Contact";
 import Services from "../Pages/Services";
+import Profile from "../components/Profile/Profile";
 
 const routers = () => {
   return (
@@ -15,6 +16,7 @@ const routers = () => {
       <Route path="/home" element={<Home/>} />
       <Route path="/doctor" element={<Doctor/>} />
       <Route path="/doctor/:id" element={<DoctorDetail/>} />
+      <Route path="/profile" element={<Profile />} />
       <Route path="/login" element={<Login/>} />
       <Route path="/register" element={<Signup/>} />
       <Route path="/contact" element={<Contact/>} />

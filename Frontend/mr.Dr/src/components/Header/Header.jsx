@@ -34,6 +34,8 @@ const Header = () => {
     menuRef.current?.classList.toggle("show__menu");
   };
 
+
+
   return (
     <header ref={headerRef} className="header flex items-center">
       <div className="container">
@@ -67,9 +69,9 @@ const Header = () => {
           <div className="flex items-center gap-4">
             {/* User Avatar */}
             <div className="hidden md:block">
-              <Link to="/">
+              <Link to="/profile">
                 <figure className="w-[35px] h-[35px] rounded-full cursor-pointer">
-                  <img src={userImg} className="w-full rounded-full" alt="User" />
+                  <img src={userImg} className="w-full h-full rounded-full object-cover" alt="User" />
                 </figure>
               </Link>
             </div>

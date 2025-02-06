@@ -11,6 +11,10 @@ import {Link} from 'react-router-dom'
 import {BsArrowRight} from "react-icons/bs" 
 import About from '../components/About/About'
 import Services from './Services'
+import DoctorList from '../components/Doctors/DoctorList'
+import FaqList from '../components/FAQ/FaqList'
+import faqimg from "../assets/images/faq-img.png";
+import Testimonial from '../components/Testimonial/Testimonial'
 
 const Home = () => {
   return (
@@ -212,7 +216,49 @@ const Home = () => {
       </div>
     </section>
 {/*========== Feature Section End ============== */}
+{/* ======= our great doctor =========*/}
+<section>
+  <div className="container">
+    <div className="xl :w-[470px] mx-auto">
+      <h2 className="heading text-center">Our great doctor</h2>
+      <p className="text_para text-center">
+        World-class care for everyone. our health System offers unmatched,
+        expert health care.
+      </p>
+    </div>
+    
+    <DoctorList />
+  </div>
+</section>
+{/* ======= our great doctor =========*/}
+{/*===========FAQ=============*/}
+<section> 
+<div className="container"> 
+<div className="flex justify-between gap-[50px] lg:gap-0"> 
+<div className="w-1/2 hidden md:block"><img src={faqimg} alt="" /></div> 
+<div className="w-full md:w-1/2">
+<h2 className="heading">
+    Most Questions by our beloved patients</h2>
+    <FaqList/></div>
+</div> 
+</div>
+</section>
+{/*===========FAQ End=============*/}
+<section>
+        <div className="container">
+          <div className="xl:w-[470px] mx-auto">
+            <h2 className="heading text-center">What our patient say</h2>
+            <p className="text__para text-center">
+              World-class care for everyone. Our health System offers unmatched,
+              expert health care.
+             
+            </p>
+          </div>
+           <Testimonial/>
+        </div>
 
+
+       </section>
 
     </>
   );

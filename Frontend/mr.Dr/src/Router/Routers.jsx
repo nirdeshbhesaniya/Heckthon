@@ -8,6 +8,7 @@ import Signup from "../Pages/Signup";
 import Contact from "../Pages/Contact";
 import Services from "../Pages/Services";
 import Profile from "../components/Profile/Profile";
+import ChangePassword from "../Pages/ChangePassword";
 
 const routers = () => {
   return (
@@ -21,6 +22,7 @@ const routers = () => {
       <Route path="/register" element={<Signup/>} />
       <Route path="/contact" element={<Contact/>} />
       <Route path="/services" element={<Services/>} />
+      <Route path="/change-password" element={<ChangePassword/>} />
     </Routes>
   );
 }

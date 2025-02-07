@@ -1,76 +1,8 @@
-import { useState, useEffect } from "react";
-import { auth, db, storage } from "../../Firebase/Firebase";
-import { signOut, updateProfile } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { useNavigate } from "react-router-dom";
+
 
 export default function Profile() {
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState("");
-  const [gender, setGender] = useState("");
-  const [photo, setPhoto] = useState(null);
-  const [photoURL, setPhotoURL] = useState("");
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const user = auth.currentUser;
-      if (!user) {
-        navigate("/profile");
-        return;
-      }
-
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        setUserData(data);
-        setFullName(data.fullName);
-        setRole(data.role);
-        setGender(data.gender);
-        setPhotoURL(data.photoURL);
-      }
-      setLoading(false);
-    };
-
-    fetchUserData();
-  }, [navigate]);
-
-  const handleSave = async () => {
-    setLoading(true);
-    const user = auth.currentUser;
-    let newPhotoURL = photoURL;
-
-    if (photo) {
-      const storageRef = ref(storage, `profileImages/${user.uid}`);
-      await uploadBytes(storageRef, photo);
-      newPhotoURL = await getDownloadURL(storageRef);
-    }
-
-    await updateProfile(user, { displayName: fullName, photoURL: newPhotoURL });
-
-    await updateDoc(doc(db, "users", user.uid), {
-      fullName,
-      role,
-      gender,
-      photoURL: newPhotoURL,
-    });
-
-    setUserData({ ...userData, fullName, role, gender, photoURL: newPhotoURL });
-    setPhotoURL(newPhotoURL);
-    setEditing(false);
-    setLoading(false);
-  };
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate("/login");
-  };
-
-  if (loading) return <div className="flex justify-center mt-10">Loading...</div>;
+  
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">

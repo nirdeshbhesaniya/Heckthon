@@ -128,4 +128,17 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword };
+// Fetch User Profile (with authenticated token)
+const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password -refreshToken"); // Exclude password and refreshToken
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Send back the user data including the photo URL
+  res.status(200).json(new ApiResponse(200, user, "User profile fetched successfully"));
+});
+
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getUserProfile };

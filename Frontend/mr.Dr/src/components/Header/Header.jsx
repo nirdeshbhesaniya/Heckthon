@@ -1,8 +1,8 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { BiMenu } from "react-icons/bi";
 import logo from "../../assets/images/logo.png";
-import userImg from "../../assets/images/avatar-icon.png";
+import defaultUserImg from "../../assets/images/avatar-icon.png"; // Default avatar
 
 const navLinks = [
   { path: "/home", display: "Home" },
@@ -14,6 +14,50 @@ const navLinks = [
 const Header = () => {
   const headerRef = useRef(null);
   const menuRef = useRef(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userImage, setUserImage] = useState(defaultUserImg); // Default image
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+
+    if (token) {
+      fetchUserProfile();
+    }
+  }, []);
+
+  // Function to fetch user profile
+  const fetchUserProfile = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/users/profile", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // Send auth token
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data");
+      }
+
+      const data = await response.json();
+
+      if (data && data.profileImage) {
+        setUserImage(data.profileImage); // Set Cloudinary image URL
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setIsLoggedIn(false);
+    setUserImage(defaultUserImg); // Reset to default image
+    window.location.reload();
+  };
 
   const handleStickyHeader = () => {
     if (window.scrollY > 80) {
@@ -33,8 +77,6 @@ const Header = () => {
   const toggleMenu = () => {
     menuRef.current?.classList.toggle("show__menu");
   };
-
-
 
   return (
     <header ref={headerRef} className="header flex items-center">
@@ -68,20 +110,35 @@ const Header = () => {
           {/* User & Menu Icons */}
           <div className="flex items-center gap-4">
             {/* User Avatar */}
-            <div className="hidden md:block">
-              <Link to="/profile">
-                <figure className="w-[35px] h-[35px] rounded-full cursor-pointer">
-                  <img src={userImg} className="w-full h-full rounded-full object-cover" alt="User" />
-                </figure>
-              </Link>
-            </div>
+            {isLoggedIn && (
+              <div className="hidden md:block">
+                <Link to="/profile">
+                  <figure className="w-[35px] h-[35px] rounded-full cursor-pointer">
+                    <img
+                      src={userImage} // Show Cloudinary image
+                      className="w-full h-full rounded-full object-cover"
+                      alt="User"
+                    />
+                  </figure>
+                </Link>
+              </div>
+            )}
 
-            {/* Login Button */}
-            <Link to="/login">
-              <button className="bg-primaryColor py-2 px-6 text-white font-[600] h-[44px] flex items-center justify-center rounded-[50px]">
-                Login
+            {/* Login / Logout Button */}
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 py-2 px-6 text-white font-[600] h-[44px] flex items-center justify-center rounded-[50px]"
+              >
+                Logout
               </button>
-            </Link>
+            ) : (
+              <Link to="/login">
+                <button className="bg-primaryColor py-2 px-6 text-white font-[600] h-[44px] flex items-center justify-center rounded-[50px]">
+                  Login
+                </button>
+              </Link>
+            )}
 
             {/* Mobile Menu Toggle */}
             <span className="md:hidden" onClick={toggleMenu}>

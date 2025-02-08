@@ -28,6 +28,7 @@ import userRoutes from "./routes/user.routes.js";
 import doctorRoutes from "./routes/doctor.routes.js";
 import profileRoutes from "./routes/profile.routes.js"; // Import profile routes
 
+
 // ✅ Use Profile Routes
 app.use("/api/v1", profileRoutes);
 app.use("/api/v1/users", userRoutes);

@@ -8,7 +8,7 @@ import bcrypt from "bcryptjs";
 
 // Function to generate tokens
 const generateAccessAndRefreshTokens = user => {
-  return jwt.sign({id:user})
+  return jwt.sign({id:user._id,role:user.role},process.env.ACCESS_TOKEN_SECRET,{expiresIn:"15d"})
 };
 
 // **Register User**
@@ -87,31 +87,43 @@ const registerDoctor = asyncHandler(async (req, res) => {
 // **Login User**
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
   try {
-    let user=null;
-
-    const patient = await User.findOne({email})
-    const doctor = await Doctor.findOne({email})
-
-    if(patient){
-      user=patient;
-    } 
-    if(doctor){
-      user=doctor;
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await Doctor.findOne({ email });
     }
-
-    if(!user){
-      return res.status(404).json({message:"User not found"});
-    }
-
-    const ispasswordMatch = await bcrypt.compare(password,user.password);
-    if(!ispasswordMatch){
-      return res.status(400).json({message:"Invalid credentials"});
-    }
-
-    const token = generateAccessAndRefreshTokens(user)
-  } catch (error) {
     
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const token = generateAccessAndRefreshTokens(user);
+    await user.save();
+    // Ensure user._doc exists before destructuring
+    const { password: _, role, appointments, ...rest } = user.toObject();
+
+    return res.status(200).json({
+      status: true,
+      message: "Successfully logged in",
+      token,
+      data: { ...rest },
+      role,
+    });
+
+  } catch (err) {
+    console.error("Login error:", err.message);
+    return res.status(500).json({ status: false, message: "Failed to login" });
   }
   // if (!email || !password) throw new ApiError(400, "Email and password are required");
 
@@ -187,6 +199,49 @@ const getUserProfile = asyncHandler(async (req, res) => {
   // Send back the user data including the photo URL
   res.status(200).json(new ApiResponse(200, user, "User profile fetched successfully"));
 });
+//updete user
+const updatedUser = asyncHandler(async (req, res) => {
+  const id=req.params.id
+
+  try {
+    const updatedUser=await User.findByIdAndUpdate(id,{$set:req.body},{new:true})
+    res.status(200).json({success:true,message:"Successfully update",data:updatedUser})
+  } catch (err) {
+    res.status(500).json({success:false,message:"failed to update",data:updatedUser})
+  }
+});
+// Delete user
+const deleteUser = asyncHandler(async (req, res) => {
+  const id=req.params.id
+  try {
+    await User.findByIdAndDelete(id,)
+    res.status(200).json({success:true,message:"Delete User Successfully"})
+  } catch (err) {
+    res.status(500).json({success:false,message:"failed to delete"})
+  }
+});
+
+const getSingaleUser = asyncHandler(async (req, res) => {
+  const id=req.params.id
+
+  try {
+    const user = await User.findById(id,)
+    res.status(200).json({success:true,message:"User Found",data:user})
+  } catch (err) {
+    res.status(404).json({success:false,message:"User Not Found"})
+  }
+});
+
+const getAllUser = asyncHandler(async (req, res) => {
+  
+
+  try {
+    const users = await User.find({})
+    res.status(200).json({success:true,message:"All User Found", data:users})
+  } catch (err) {
+    res.status(404).json({success:false,message:"User Not Found"})
+  }
+});
 
 
-export { registerUser,registerDoctor, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getUserProfile };
+export { registerUser,registerDoctor, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getUserProfile, updatedUser,deleteUser,getSingaleUser,getAllUser };

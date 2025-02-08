@@ -28,21 +28,28 @@ const Header = () => {
 
    // Function to fetch user profile
    const fetchUserProfile = async () => {
+    const userId = localStorage.getItem("userId"); // ✅ Get user ID from localStorage
+    if (!userId) return;
+  
     try {
-      const response = await fetch("http://localhost:8000/api/v1/profile", {
+      const response = await fetch(`http://localhost:8000/api/v1/users/${userId}`, {
         method: "GET",
-        credentials: "include", // Ensure cookies are sent
-        headers: { "Content-Type": "application/json" }
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`, // ✅ Include token
+        },
       });
   
       if (!response.ok) throw new Error("Failed to fetch user data");
-      
+  
       const data = await response.json();
       if (data && data.data?.photo) setUserImage(data.data.photo);
     } catch (error) {
       console.error("Error fetching user profile:", error);
     }
   };
+  
   
   
 

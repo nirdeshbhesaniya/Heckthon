@@ -15,35 +15,36 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-
-    try {
-      const response = await fetch("http://localhost:8000/api/v1/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+  
+    fetch("http://localhost:8000/api/v1/users/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, password: password }),
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (response.ok) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("userId", data.data._id); // ✅ Store user ID separately
+          localStorage.setItem("user", JSON.stringify(data.data)); // Store full user info
+  
+          setMessage("Login successful!");
+          setShowMessage(true);
+          setTimeout(() => navigate("/"), 2000);
+        } else {
+          setMessage(data.message || "Login failed. Please try again.");
+          setShowMessage(true);
+        }
+      })
+      .catch(() => {
+        setMessage("An error occurred. Please try again.");
+        setShowMessage(true);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user)); // Store user info
-        setMessage("Login successful!");
-        setShowMessage(true);
-        setTimeout(() => navigate("/"), 2000);
-      } else {
-        setMessage(data.message || "Login failed. Please try again.");
-        setShowMessage(true);
-      }
-    } catch {
-      setMessage("An error occurred. Please try again.");
-      setShowMessage(true);
-    } finally {
-      setLoading(false);
-    }
   };
+  
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">

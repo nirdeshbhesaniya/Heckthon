@@ -4,7 +4,11 @@ import {
     logoutUser, 
     registerUser,
     refreshAccessToken, 
-    changeCurrentPassword, 
+    changeCurrentPassword,
+    updatedUser,
+    deleteUser,
+    getSingaleUser,
+    getAllUser, 
     // getCurrentUser, 
     // updateUserAvatar, 
     // updateUserCoverImage, 
@@ -34,6 +38,10 @@ router.route("/login").post(loginUser)
 router.route("/logout").post(verifyJWT,  logoutUser)
 router.route("/refresh-token").post(refreshAccessToken)
 router.route("/change-password").post(verifyJWT, changeCurrentPassword)
+router.route("/:id").get(getSingaleUser)
+router.route("/").get(getAllUser)
+router.route("/:id").put(updatedUser)
+router.route("/:id").delete(deleteUser)
 // router.route("/current-user").get(verifyJWT, getCurrentUser)
 // router.route("/update-account").patch(verifyJWT, updateAccountDetails)
 

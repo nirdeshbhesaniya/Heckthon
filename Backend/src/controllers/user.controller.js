@@ -4,24 +4,11 @@ import {User} from "../models/UserSchema.js"; // Updated import
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs"; // For password hashing
+import bcrypt from "bcryptjs"; 
 
 // Function to generate tokens
-const generateAccessAndRefreshTokens = async (userId) => {
-  try {
-    const user = await User.findById(userId);
-    if (!user) throw new ApiError(404, "User not found");
-
-    const accessToken = jwt.sign({ _id: user._id, role: user.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
-    const refreshToken = jwt.sign({ _id: user._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
-
-    user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
-
-    return { accessToken, refreshToken };
-  } catch (error) {
-    throw new ApiError(500, "Error generating tokens");
-  }
+const generateAccessAndRefreshTokens = user => {
+  return jwt.sign({id:user})
 };
 
 // **Register User**
@@ -60,26 +47,87 @@ const registerUser = asyncHandler(async (req, res) => {
 
   res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully"));
 });
+// **Register Doctor**
+const registerDoctor = asyncHandler(async (req, res) => {
+  const { name, email, password, phone, role, gender, bloodType } = req.body;
+
+  if ([name, email, password].some((field) => field?.trim() === "")) {
+    throw new ApiError(400, "Name, email, and password are required");
+  }
+
+  const existedUser = await User.findOne({ email });
+  if (existedUser) throw new ApiError(409, "User already exists");
+
+  // Hash password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Handle image uploads
+  let photoUrl = "";
+  if (req.files?.photo?.[0]?.path) {
+    const uploadResult = await uploadOnCloudinary(req.files.photo[0].path);
+    photoUrl = uploadResult?.url || "";
+  }
+
+  const user = await User.create({
+    name,
+    email,
+    password: hashedPassword,
+    phone,
+    role,
+    gender,
+    bloodType,
+    photo: photoUrl,
+  });
+
+  const createdUser = await User.findById(user._id).select("-password -refreshToken");
+
+  res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully"));
+});
 
 // **Login User**
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  try {
+    let user=null;
 
-  if (!email || !password) throw new ApiError(400, "Email and password are required");
+    const patient = await User.findOne({email})
+    const doctor = await Doctor.findOne({email})
 
-  const user = await User.findOne({ email });
-  if (!user) throw new ApiError(404, "User not found");
+    if(patient){
+      user=patient;
+    } 
+    if(doctor){
+      user=doctor;
+    }
 
-  // Validate password
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) throw new ApiError(401, "Invalid credentials");
+    if(!user){
+      return res.status(404).json({message:"User not found"});
+    }
 
-  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const ispasswordMatch = await bcrypt.compare(password,user.password);
+    if(!ispasswordMatch){
+      return res.status(400).json({message:"Invalid credentials"});
+    }
 
-  res.status(200)
-    .cookie("accessToken", accessToken, { httpOnly: true, secure: true })
-    .cookie("refreshToken", refreshToken, { httpOnly: true, secure: true })
-    .json(new ApiResponse(200, { user, accessToken, refreshToken }, "User logged in successfully"));
+    const token = generateAccessAndRefreshTokens(user)
+  } catch (error) {
+    
+  }
+  // if (!email || !password) throw new ApiError(400, "Email and password are required");
+
+  // const user = await User.findOne({ email });
+  // if (!user) throw new ApiError(404, "User not found");
+
+  // // Validate password
+  // const isPasswordValid = await bcrypt.compare(password, user.password);
+  // if (!isPasswordValid) throw new ApiError(401, "Invalid credentials");
+
+  // const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+
+  // res.status(200)
+  //   .cookie("accessToken", accessToken, { httpOnly: true, secure: true })
+  //   .cookie("refreshToken", refreshToken, { httpOnly: true, secure: true })
+  //   .json(new ApiResponse(200, { user, accessToken, refreshToken }, "User logged in successfully"));
 });
 
 // **Logout User**
@@ -131,7 +179,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 // Fetch User Profile (with authenticated token)
 const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).select("-password -refreshToken"); // Exclude password and refreshToken
-
+  console.log(user);
   if (!user) {
     throw new ApiError(404, "User not found");
   }
@@ -141,4 +189,4 @@ const getUserProfile = asyncHandler(async (req, res) => {
 });
 
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getUserProfile };
+export { registerUser,registerDoctor, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getUserProfile };

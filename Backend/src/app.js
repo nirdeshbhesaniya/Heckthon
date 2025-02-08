@@ -24,10 +24,13 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 // ✅ Routes Import
-import userRouter from "./routes/user.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import doctorRoutes from "./routes/doctor.routes.js";
+import profileRoutes from "./routes/profile.routes.js"; // Import profile routes
 
-app.use("/api/v1/users", userRouter);
+// ✅ Use Profile Routes
+app.use("/api/v1", profileRoutes);
+app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/doctors", doctorRoutes);
 
 export { app };

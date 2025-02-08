@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import signup from "../assets/images/signup.gif";
 import { registerUser } from "../fetch"; // Ensure this correctly calls your backend
+// import { registerDoctor } from "../fetch"; // Ensure this correctly calls your backend
 import { motion } from "framer-motion"; // For animated popups
 
 export default function Signup() {

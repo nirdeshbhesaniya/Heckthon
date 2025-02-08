@@ -26,30 +26,25 @@ const Header = () => {
     }
   }, []);
 
-  // Function to fetch user profile
-  const fetchUserProfile = async () => {
+   // Function to fetch user profile
+   const fetchUserProfile = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/users/profile", {
+      const response = await fetch("http://localhost:8000/api/v1/profile", {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`, // Send auth token
-        },
+        credentials: "include", // Ensure cookies are sent
+        headers: { "Content-Type": "application/json" }
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch user data");
-      }
-
+  
+      if (!response.ok) throw new Error("Failed to fetch user data");
+      
       const data = await response.json();
-
-      if (data && data.profileImage) {
-        setUserImage(data.profileImage); // Set Cloudinary image URL
-      }
+      if (data && data.data?.photo) setUserImage(data.data.photo);
     } catch (error) {
       console.error("Error fetching user profile:", error);
     }
   };
+  
+  
 
   const handleLogout = () => {
     localStorage.removeItem("token");

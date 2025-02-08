@@ -23,30 +23,7 @@ export const registerUser = async (formData) => {
     throw error;
   }
 };
-export const registerDoctor = async (formData) => {
-  try {
-    // Sending FormData to backend with credentials
-    const response = await fetch("http://localhost:8000/api/v1/doctors/register", {
-      method: "POST",
-      body: formData,  // formData will automatically set the correct content-type to multipart/form-data
-      credentials: "include", // Ensure credentials are included
-      headers: {
-        Accept: "application/json", // Allow server to send JSON response
-        // You don't need Content-Type header when using FormData
-      },
-    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    // Parse the response if it's successful
-    return await response.json();
-  } catch (error) {
-    console.error("Registration Error:", error);
-    throw error;
-  }
-};
 
 
 

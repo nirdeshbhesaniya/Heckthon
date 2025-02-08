@@ -22,41 +22,12 @@ const registerUser = asyncHandler(async (req, res) => {
   const existedUser = await User.findOne({ email });
   if (existedUser) throw new ApiError(409, "User already exists");
 
-  // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Handle image uploads
-  let photoUrl = "";
-  if (req.files?.photo?.[0]?.path) {
-    const uploadResult = await uploadOnCloudinary(req.files.photo[0].path);
-    photoUrl = uploadResult?.url || "";
+  if (!["patient", "doctor"].includes(role)) {
+    return res.status(400).json({ message: "Invalid role" });
   }
-
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    phone,
-    role,
-    gender,
-    bloodType,
-    photo: photoUrl,
-  });
-
-  const createdUser = await User.findById(user._id).select("-password -refreshToken");
-
-  res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully"));
-});
-// **Register Doctor**
-const registerDoctor = asyncHandler(async (req, res) => {
-  const { name, email, password, phone, role, gender, bloodType } = req.body;
-
-  if ([name, email, password].some((field) => field?.trim() === "")) {
-    throw new ApiError(400, "Name, email, and password are required");
+  if (!["male", "female"].includes(gender)) {
+    return res.status(400).json({ message: "Invalid gender" });
   }
-
-  const existedUser = await User.findOne({ email });
-  if (existedUser) throw new ApiError(409, "User already exists");
 
   // Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -79,10 +50,48 @@ const registerDoctor = asyncHandler(async (req, res) => {
     photo: photoUrl,
   });
 
+  
+
   const createdUser = await User.findById(user._id).select("-password -refreshToken");
 
   res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully"));
 });
+// // **Register Doctor**
+// const registerDoctor = asyncHandler(async (req, res) => {
+//   const { name, email, password, phone, role, gender, bloodType } = req.body;
+
+//   if ([name, email, password].some((field) => field?.trim() === "")) {
+//     throw new ApiError(400, "Name, email, and password are required");
+//   }
+
+//   const existedUser = await User.findOne({ email });
+//   if (existedUser) throw new ApiError(409, "User already exists");
+
+//   // Hash password
+//   const hashedPassword = await bcrypt.hash(password, 10);
+
+//   // Handle image uploads
+//   let photoUrl = "";
+//   if (req.files?.photo?.[0]?.path) {
+//     const uploadResult = await uploadOnCloudinary(req.files.photo[0].path);
+//     photoUrl = uploadResult?.url || "";
+//   }
+
+//   const user = await User.create({
+//     name,
+//     email,
+//     password: hashedPassword,
+//     phone,
+//     role,
+//     gender,
+//     bloodType,
+//     photo: photoUrl,
+//   });
+
+//   const createdUser = await User.findById(user._id).select("-password -refreshToken");
+
+//   res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully"));
+// });
 
 // **Login User**
 const loginUser = asyncHandler(async (req, res) => {
@@ -244,4 +253,4 @@ const getAllUser = asyncHandler(async (req, res) => {
 });
 
 
-export { registerUser,registerDoctor, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getUserProfile, updatedUser,deleteUser,getSingaleUser,getAllUser };
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getUserProfile, updatedUser,deleteUser,getSingaleUser,getAllUser };

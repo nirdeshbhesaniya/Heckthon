@@ -7,17 +7,19 @@ import Login from "../Pages/Login";
 import Signup from "../Pages/Signup";
 import Contact from "../Pages/Contact";
 import Services from "../Pages/Services";
-import Profile from "../components/Profile/Profile";
 import ChangePassword from "../Pages/ChangePassword";
-
+import MyAccount from '../Dashboard/user-account/MyAccount';
+import Dashboard from "../Dashboard/doctor-account/Dashboard";
+import ProtectedRoute from "./protectedRoutes";
 const routers = () => {
   return (
     <Routes>
-      <Route path="/" element={<Home/>} />
+      <Route path="/" element={<Home/>}/>
       <Route path="/home" element={<Home/>} />
       <Route path="/doctor" element={<Doctor/>} />
       <Route path="/doctor/:id" element={<DoctorDetail/>} />
-      <Route path="/profile" element={<Profile />} />
+      <Route path="/user/profile" element={<ProtectedRoute allowedRoles={['patient']}><MyAccount/></ProtectedRoute>} />
+      <Route path="/doctor/profile" element={<ProtectedRoute allowedRoles={['doctor']} ><Dashboard/></ProtectedRoute>} />
       <Route path="/login" element={<Login/>} />
       <Route path="/register" element={<Signup/>} />
       <Route path="/contact" element={<Contact/>} />

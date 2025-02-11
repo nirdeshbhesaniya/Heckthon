@@ -9,6 +9,9 @@ import {
     deleteUser,
     getSingaleUser,
     getAllUser, 
+    getUserProfile,
+    getMyAppointments,
+    getDoctorProfile,
     // getCurrentUser, 
     // updateUserAvatar, 
     // updateUserCoverImage, 
@@ -42,6 +45,12 @@ router.route("/:id").get(getSingaleUser)
 router.route("/").get(getAllUser)
 router.route("/:id").put(updatedUser)
 router.route("/:id").delete(deleteUser)
+router.route("/:id").delete(deleteUser)
+router.route("/user/profile").get(verifyJWT,getUserProfile)
+router.route("/doctor/profile").get(verifyJWT,getDoctorProfile)
+// Ensure this route is correct
+router.route("/appointments/my-appointments").get(verifyJWT, getMyAppointments);
+
 // router.route("/current-user").get(verifyJWT, getCurrentUser)
 // router.route("/update-account").patch(verifyJWT, updateAccountDetails)
 

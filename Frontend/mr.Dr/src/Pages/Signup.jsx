@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import signup from "../assets/images/signup.gif";
-import { registerUser } from "../fetch"; // Ensure this correctly calls your backend
-import { motion } from "framer-motion"; // For animated popups
+import { registerUser } from "../fetch";
+import { motion } from "framer-motion";
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -18,21 +18,18 @@ export default function Signup() {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  // Handle text and select inputs
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle file input and show preview
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setFormData({ ...formData, photo: file });
-      setPreview(URL.createObjectURL(file)); // Create preview URL
+      setPreview(URL.createObjectURL(file));
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -41,10 +38,10 @@ export default function Signup() {
     Object.entries(formData).forEach(([key, value]) => data.append(key, value));
 
     try {
-      const response = await registerUser(data); // Ensure backend handles multipart/form-data
+      const response = await registerUser(data);
       console.log(response);
       setSuccess(true);
-      setTimeout(() => navigate("/login"), 3000); // Redirect to login after success
+      setTimeout(() => navigate("/login"), 3000);
     } catch (error) {
       console.error("Registration failed:", error);
     } finally {
@@ -53,87 +50,72 @@ export default function Signup() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-2xl shadow-lg flex w-4/5 max-w-4xl">
-        {/* Left Image */}
-        <div className="w-1/2 flex justify-center items-center p-6 rounded-l-2xl">
-          <img src={signup} alt="Illustration" className="w-full" />
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
+      <div className="bg-white p-6 rounded-2xl shadow-lg flex flex-col md:flex-row w-full max-w-4xl">
+        <div className="md:w-1/2 flex justify-center items-center p-4 rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none">
+          <img src={signup} alt="Illustration" className="w-full max-w-sm" />
         </div>
 
-        {/* Right Form Section */}
-        <div className="w-1/2 p-6 relative">
-          <h2 className="text-2xl font-semibold mb-4">
+        <div className="md:w-1/2 p-4 relative">
+          <h2 className="text-xl md:text-2xl font-semibold mb-4 text-center md:text-left">
             Create an <span className="text-blue-600">account</span>
           </h2>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="block text-gray-600 mb-1">Full Name</label>
-              <input
-                type="text"
-                name="name"
-                className="w-full p-2 border-b border-gray-300 outline-none focus:border-blue-500"
-                value={formData.name}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="text"
+              name="name"
+              placeholder="Full Name"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter your email"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+
+            <div className="flex flex-col md:flex-row md:space-x-4">
+              <select
+                name="role"
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={formData.role}
                 onChange={handleChange}
-                required
-              />
-            </div>
+              >
+                <option value="patient">Patient</option>
+                <option value="doctor">Doctor</option>
+              </select>
 
-            <div className="mb-4">
-              <label className="block text-gray-600 mb-1">Enter your email</label>
-              <input
-                type="email"
-                name="email"
-                className="w-full p-2 border-b border-gray-300 outline-none focus:border-blue-500"
-                value={formData.email}
+              <select
+                name="gender"
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2 md:mt-0"
+                value={formData.gender}
                 onChange={handleChange}
-                required
-              />
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-gray-600 mb-1">Password</label>
-              <input
-                type="password"
-                name="password"
-                className="w-full p-2 border-b border-gray-300 outline-none focus:border-blue-500"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <label className="block text-gray-600 mb-1">Are you a:</label>
-                <select
-                  name="role"
-                  className="border border-gray-300 rounded px-3 py-2"
-                  value={formData.role}
-                  onChange={handleChange}
-                >
-                  <option value="patient">Patient</option>
-                  <option value="doctor">Doctor</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-gray-600 mb-1">Gender:</label>
-                <select
-                  name="gender"
-                  className="border border-gray-300 rounded px-3 py-2"
-                  value={formData.gender}
-                  onChange={handleChange}
-                >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Upload and Preview */}
-            <div className="mb-6 flex items-center space-x-4">
-              <label className="bg-gray-200 px-4 py-2 rounded cursor-pointer">
+            <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
+              <label className="bg-gray-200 px-4 py-2 rounded-lg cursor-pointer text-center">
                 Upload Photo
                 <input
                   type="file"
@@ -144,11 +126,14 @@ export default function Signup() {
                 />
               </label>
               {preview && (
-                <img src={preview} alt="Preview" className="w-12 h-12 rounded-full object-cover" />
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="w-12 h-12 rounded-full object-cover"
+                />
               )}
             </div>
 
-            {/* Signup Button */}
             <button
               type="submit"
               className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 flex justify-center items-center"
@@ -158,7 +143,6 @@ export default function Signup() {
             </button>
           </form>
 
-          {/* Success Popup Animation */}
           {success && (
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
@@ -170,33 +154,11 @@ export default function Signup() {
             </motion.div>
           )}
 
-          {/* Login Redirect */}
           <p className="text-center text-gray-600 mt-4">
-            Already have an account?{" "}
-            <a href="/login" className="text-blue-600 font-medium">
-              Login
-            </a>
+            Already have an account? <a href="/login" className="text-blue-600 font-medium">Login</a>
           </p>
         </div>
       </div>
-
-      {/* CSS for Loader */}
-      <style>
-        {`
-          .loader {
-            border: 3px solid white;
-            border-top: 3px solid blue;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-      </style>
     </div>
   );
 }

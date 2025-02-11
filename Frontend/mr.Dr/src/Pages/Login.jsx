@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-
+import {UserContext} from "../userContext"
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -10,41 +10,47 @@ export default function Login() {
   const [showMessage, setShowMessage] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
+  const {dispatch} = useContext(UserContext)
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-  
-    fetch("http://localhost:8000/api/v1/users/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email, password: password }),
-    })
-      .then(async (response) => {
-        const data = await response.json();
-        if (response.ok) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("userId", data.data._id); // ✅ Store user ID separately
-          localStorage.setItem("user", JSON.stringify(data.data)); // Store full user info
-  
-          setMessage("Login successful!");
-          setShowMessage(true);
-          setTimeout(() => navigate("/"), 2000);
-        } else {
-          setMessage(data.message || "Login failed. Please try again.");
-          setShowMessage(true);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Login failed. Please try again.");
+      }
+
+      dispatch({
+        type:"LOGIN_SUCCESS",
+        payload:{
+            user: data.data,
+            token: data.token,
+            role:data.role
         }
       })
-      .catch(() => {
-        setMessage("An error occurred. Please try again.");
-        setShowMessage(true);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+
+      
+      setMessage("Login successful!");
+      setShowMessage(true);
+
+      setTimeout(() => navigate("/"), 1500); // Shortened delay for better UX
+    } catch (error) {
+      setMessage(error.message);
+      setShowMessage(true);
+    } finally {
+      setLoading(false);
+    }
   };
-  
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
@@ -97,14 +103,16 @@ export default function Login() {
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
-            className={`mt-4 p-2 text-center text-white ${message.includes("failed") ? "bg-red-500" : "bg-green-500"} rounded`}
+            className={`mt-4 p-2 text-center text-white ${
+              message.includes("failed") ? "bg-red-500" : "bg-green-500"
+            } rounded`}
           >
             {message}
           </motion.div>
         )}
 
         <p className="text-center text-gray-600 mt-4">
-          Do not have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link to="/register" className="text-blue-600 font-medium">
             Register
           </Link>

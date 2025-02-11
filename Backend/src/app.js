@@ -25,13 +25,13 @@ app.use(cookieParser());
 
 // ✅ Routes Import
 import userRoutes from "./routes/user.routes.js";
-// import doctorRoutes from "./routes/doctor.routes.js";
-import profileRoutes from "./routes/profile.routes.js"; // Import profile routes
+import doctorRoutes from "./routes/doctor.routes.js";
+// import profileRoutes from "./routes/profile.routes.js"; // Import profile routes
 
 
 // ✅ Use Profile Routes
-app.use("/api/v1", profileRoutes);
+// app.use("/api/v1", profileRoutes);
 app.use("/api/v1/users", userRoutes);
-// app.use("/api/v1/doctors", doctorRoutes);
+app.use("/api/v1/doctors", doctorRoutes);
 
 export { app };

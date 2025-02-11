@@ -1,10 +1,14 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import {User} from "../models/UserSchema.js"; // Updated import
+import {Doctor} from "../models/DoctorSchema.js"
+import {Booking} from "../models/BookingSchema.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs"; 
+
+
 
 // Function to generate tokens
 const generateAccessAndRefreshTokens = user => {
@@ -13,7 +17,7 @@ const generateAccessAndRefreshTokens = user => {
 
 // **Register User**
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, phone, role, gender, bloodType } = req.body;
+  const { name, email, password, phone, role, gender, bloodType, specialization, qualifications, experiences, bio, about, timeSlots, ticketPrice } = req.body;
 
   if ([name, email, password].some((field) => field?.trim() === "")) {
     throw new ApiError(400, "Name, email, and password are required");
@@ -24,9 +28,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (!["patient", "doctor"].includes(role)) {
     return res.status(400).json({ message: "Invalid role" });
-  }
-  if (!["male", "female"].includes(gender)) {
-    return res.status(400).json({ message: "Invalid gender" });
   }
 
   // Hash password
@@ -39,20 +40,41 @@ const registerUser = asyncHandler(async (req, res) => {
     photoUrl = uploadResult?.url || "";
   }
 
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    phone,
-    role,
-    gender,
-    bloodType,
-    photo: photoUrl,
-  });
+  let user;
+  if (role === "doctor") {
+    user = await Doctor.create({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      photo: photoUrl,
+      role,
+      specialization,
+      qualifications,
+      experiences,
+      bio,
+      about,
+      timeSlots,
+      ticketPrice,
+      isApproved: "pending",
+    });
+  } else {
+    user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      role,
+      gender,
+      bloodType,
+      photo: photoUrl,
+      appointments,
+    });
+  }
 
-  
-
-  const createdUser = await User.findById(user._id).select("-password -refreshToken");
+  const createdUser = await (role === "doctor"
+    ? Doctor.findById(user._id).select("-password")
+    : User.findById(user._id).select("-password"));
 
   res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully"));
 });
@@ -198,32 +220,48 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 // Fetch User Profile (with authenticated token)
-const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select("-password -refreshToken"); // Exclude password and refreshToken
-  console.log(user);
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
+// const getUserProfile = asyncHandler(async (req, res) => {
+//   const user = await User.findById(req.user._id).select("-password -refreshToken"); // Exclude password and refreshToken
+//   console.log(user);
+//   if (!user) {
+//     throw new ApiError(404, "User not found");
+//   }
 
   // Send back the user data including the photo URL
-  res.status(200).json(new ApiResponse(200, user, "User profile fetched successfully"));
-});
+//   res.status(200).json(new ApiResponse(200, user, "User profile fetched successfully"));
+// });
 //updete user
-const updatedUser = asyncHandler(async (req, res) => {
-  const id=req.params.id
+export const updatedUser = asyncHandler(async (req, res) => {
+  const id = req.params.id;
 
   try {
-    const updatedUser=await User.findByIdAndUpdate(id,{$set:req.body},{new:true})
-    res.status(200).json({success:true,message:"Successfully update",data:updatedUser})
+    const updateFields = { ...req.body };
+
+    // If a new file is uploaded, set its path
+    if (req.file) {
+      updateFields.photo = `/uploads/${req.file.filename}`;
+    }
+
+    // Update User or Doctor model
+    const updatedUser = await User.findByIdAndUpdate(id, { $set: updateFields }, { new: true }) ||
+                        await Doctor.findByIdAndUpdate(id, { $set: updateFields }, { new: true });
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Successfully updated", data: updatedUser });
   } catch (err) {
-    res.status(500).json({success:false,message:"failed to update",data:updatedUser})
+    console.error("Update Error:", err);
+    res.status(500).json({ success: false, message: "Failed to update" });
   }
 });
+
 // Delete user
 const deleteUser = asyncHandler(async (req, res) => {
   const id=req.params.id
   try {
-    await User.findByIdAndDelete(id,)
+    await User.findByIdAndDelete(id) || await Doctor.findByIdAndDelete(id)
     res.status(200).json({success:true,message:"Delete User Successfully"})
   } catch (err) {
     res.status(500).json({success:false,message:"failed to delete"})
@@ -234,7 +272,7 @@ const getSingaleUser = asyncHandler(async (req, res) => {
   const id=req.params.id
 
   try {
-    const user = await User.findById(id,)
+    let user = await User.findById(id).select("-password") || await Doctor.findById(id).select("-password");
     res.status(200).json({success:true,message:"User Found",data:user})
   } catch (err) {
     res.status(404).json({success:false,message:"User Not Found"})
@@ -243,14 +281,96 @@ const getSingaleUser = asyncHandler(async (req, res) => {
 
 const getAllUser = asyncHandler(async (req, res) => {
   
-
   try {
-    const users = await User.find({})
-    res.status(200).json({success:true,message:"All User Found", data:users})
+    const {query} = req.query
+    let doctors;
+    if(query){
+       doctors = await Doctor.find({
+        isApproved:"approved",
+        $or:[
+          {name:{$regex:query,$option:'i'}},
+          {specialization:{$regex:query,$option:'i'}},
+        ],
+      }).select("-password");
+    }else{
+      doctors=await Doctor.find({isApproved:"approved"}).select("-password")
+    }
+    const users = await User.find({}).select("-password");
+    
+    res.status(200).json({success:true,message:"All User Found", data:{ patients: users, doctors }})
   } catch (err) {
     res.status(404).json({success:false,message:"User Not Found"})
   }
 });
 
+const getUserProfile = asyncHandler(async(req,res)=>{
+  const userId=req.userId;
+  try {
+    const user = await User.findById(userId);
+    if(!user){
+      return res.status(404).json({success:false,message:"User not found"})
+    }
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getUserProfile, updatedUser,deleteUser,getSingaleUser,getAllUser };
+    const {password,...rest} = user._doc;
+    res.status(200).json({success:true,message:"User profile fetched successfully",data:{...rest}})
+  } catch (err) {
+    return res.status(500).json({success:false,message:"Failed to get user profile"})
+  }
+})
+
+const getDoctorProfile = asyncHandler(async(req,res)=>{
+  const doctorId=req.userId;
+  try {
+    const doctor = await Doctor.findById(doctorId);
+    if(!doctor){
+      return res.status(404).json({success:false,message:"Doctor not found"})
+    }
+
+    const {password,...rest} = doctor._doc;
+    const appointments = await Booking.find({doctor:doctorId})
+    res.status(200).json({success:true,message:"User profile fetched successfully",data:{...rest,appointments}})
+  } catch (err) {
+    return res.status(500).json({success:false,message:"Failed to get user profile"})
+  }
+})
+
+// const getMyAppointments = asyncHandler(async (req, res) => {
+//   try {
+//     const booking = await Booking.find({ user: req.userId })
+//     const doctorIds = booking.map(el=>el.doctor.id)
+//     const doctors = await Doctor.find({ _id: { $in: doctorIds } }).select("-password");
+
+//     res.status(200).json({ success: true, message: "Appointments fetched successfully", data: { booking, doctors } });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: "Failed to get appointments" });
+//   }
+// });
+ const getMyAppointments = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.userId;
+    console.log(userId);
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const bookings = await Booking.find({ user: userId }).populate("doctor", "-password");
+    console.log(bookings);
+    
+    if (!bookings.length) {
+      return res.status(404).json({ success: false, message: "No appointments found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Appointments fetched successfully",
+      data: bookings,
+    });
+  } catch (err) {
+    console.error("Error fetching appointments:", err);
+    res.status(500).json({ success: false, message: "Failed to get appointments" });
+  }
+});
+
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword,deleteUser,getSingaleUser,getAllUser,getUserProfile,getMyAppointments,getDoctorProfile};

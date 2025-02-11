@@ -1,8 +1,9 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useContext } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { BiMenu } from "react-icons/bi";
 import logo from "../../assets/images/logo.png";
-import defaultUserImg from "../../assets/images/avatar-icon.png"; // Default avatar
+import defaultUserImg from "../../assets/images/avatar-icon.png";
+import { UserContext } from "../../userContext";
 
 const navLinks = [
   { path: "/home", display: "Home" },
@@ -14,51 +15,57 @@ const navLinks = [
 const Header = () => {
   const headerRef = useRef(null);
   const menuRef = useRef(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userImage, setUserImage] = useState(defaultUserImg); // Default image
+
+  // Get user data from context
+  const { user, role, token, dispatch } = useContext(UserContext);
+
+  // Derived state from context (React will re-render when context updates)
+  const isLoggedIn = !!token;
+  const userImage = user?.photo || defaultUserImg;
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
-
     if (token) {
       fetchUserProfile();
     }
-  }, []);
+  }, [token]); // Fetch user data when token changes
 
-   // Function to fetch user profile
-   const fetchUserProfile = async () => {
-    const userId = localStorage.getItem("userId"); // ✅ Get user ID from localStorage
+  const fetchUserProfile = async () => {
+    const userId = localStorage.getItem("userId");
     if (!userId) return;
-  
+
     try {
       const response = await fetch(`http://localhost:8000/api/v1/users/${userId}`, {
         method: "GET",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`, // ✅ Include token
+          "Authorization": `Bearer ${token}`,
         },
       });
-  
+
       if (!response.ok) throw new Error("Failed to fetch user data");
-  
+
       const data = await response.json();
-      if (data && data.data?.photo) setUserImage(data.data.photo);
+
+      // Update user data in context
+      dispatch({
+        type: "LOGIN_SUCCESS",
+        payload: { user: data, token, role: data.role },
+      });
     } catch (error) {
       console.error("Error fetching user profile:", error);
     }
   };
-  
-  
-  
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setIsLoggedIn(false);
-    setUserImage(defaultUserImg); // Reset to default image
-    window.location.reload();
+    // Clear storage
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Update context state (this will trigger re-render)
+    dispatch({ type: "LOGOUT" });
+
+    // No need to manually update isLoggedIn or userImage, since context will update it
   };
 
   const handleStickyHeader = () => {
@@ -71,14 +78,10 @@ const Header = () => {
 
   useEffect(() => {
     window.addEventListener("scroll", handleStickyHeader);
-    return () => {
-      window.removeEventListener("scroll", handleStickyHeader);
-    };
+    return () => window.removeEventListener("scroll", handleStickyHeader);
   }, []);
 
-  const toggleMenu = () => {
-    menuRef.current?.classList.toggle("show__menu");
-  };
+  const toggleMenu = () => menuRef.current?.classList.toggle("show__menu");
 
   return (
     <header ref={headerRef} className="header flex items-center">
@@ -114,10 +117,10 @@ const Header = () => {
             {/* User Avatar */}
             {isLoggedIn && (
               <div className="hidden md:block">
-                <Link to="/profile">
+                <Link to={role === "doctor" ? "/doctor/profile" : "/user/profile"}>
                   <figure className="w-[35px] h-[35px] rounded-full cursor-pointer">
                     <img
-                      src={userImage} // Show Cloudinary image
+                      src={userImage}
                       className="w-full h-full rounded-full object-cover"
                       alt="User"
                     />
